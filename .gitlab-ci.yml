@@ -1,0 +1,57 @@
+image: toliak/bootstrap-cpp
+
+stages:
+  - compile
+  - check           # Comment that, if only compile
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+compile:
+  stage: compile
+
+  script:
+    - ./scripts/compile.sh
+
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}_compile
+    paths:
+      - .build/
+    policy: push
+
+.check_stage: &check_stage
+  stage: check
+
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}_compile
+    paths:
+      - .build/
+    policy: pull
+
+# Comment lines below, if only compile
+
+tests:
+  <<: *check_stage
+
+  script:
+    - ls -la
+    - ls -la .build
+    - ./scripts/tests.sh
+
+coverage:
+  <<: *check_stage
+
+  script:
+    - ./scripts/coverage.sh
+
+quality:
+  <<: *check_stage
+
+  script:
+    - ./scripts/duplication.sh
+
+mem_leaks:
+  <<: *check_stage
+
+  script:
+    - ./scripts/valgrind.sh
